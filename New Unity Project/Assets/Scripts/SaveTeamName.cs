@@ -16,8 +16,7 @@ public class SaveTeamName : MonoBehaviour
 
 
     public void onEndEdit()
-    {
-        
+    {        
         PlayerPrefs.SetString("Teamname", inputTeamname.text);
     }
 
