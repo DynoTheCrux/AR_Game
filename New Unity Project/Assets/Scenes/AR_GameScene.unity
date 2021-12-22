@@ -569,6 +569,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dragon: {fileID: 100102, guid: ff3dd417bb566b849b752ce57810bbf5, type: 3}
+  coinsItem: {fileID: 7284484408318698964, guid: bd0a5b4e6fa78fb4fb2af04545255973, type: 3}
+  _arCamera: {fileID: 45683195}
 --- !u!4 &478667423
 Transform:
   m_ObjectHideFlags: 0
@@ -595,8 +597,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1789a69c34273b54eac140c7c793cd04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 1
-  dragon: {fileID: 100102, guid: ff3dd417bb566b849b752ce57810bbf5, type: 3}
 --- !u!114 &478667425
 MonoBehaviour:
   m_ObjectHideFlags: 0
