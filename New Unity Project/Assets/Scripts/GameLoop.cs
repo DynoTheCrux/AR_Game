@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using TMPro;
 
 
 
@@ -17,6 +18,9 @@ public class GameLoop : MonoBehaviour
 
     [SerializeField]
     private GameObject coinsItem;
+
+    [SerializeField]
+    private TextMeshProUGUI showLifes;
 
     private GameObject spawnedDragon;
 
@@ -38,7 +42,8 @@ public class GameLoop : MonoBehaviour
         OBJECT_APPEARS,
         DRAGON_MOVES,
         DRAGON_COLLECTED,
-        PLAYER_COLLECTED
+        PLAYER_COLLECTED,
+        GAME_OVER
     }
 
     gameState state = gameState.OBJECT_APPEARS;
@@ -73,8 +78,9 @@ public class GameLoop : MonoBehaviour
         oldPos = spawnedDragon.transform.position;
         //spawnedDragon.transform.Rotate(0, 180, 0);
         spawnedDragon.GetComponent<Animation>().Play();
+        showLifes.SetText("Lifes: " + lifes.ToString());
 
-        
+
 
 
     }
@@ -124,7 +130,7 @@ public class GameLoop : MonoBehaviour
                 {
 
                     coinsItem.SetActive(false);
-
+                    showLifes.SetText("Lifes: " + lifes.ToString());
                     lifes -= 1;
 
                     state = gameState.DRAGON_COLLECTED;
@@ -136,13 +142,17 @@ public class GameLoop : MonoBehaviour
 
                 // If dragon is at pos of the spawned object take a life and spawn new item if still life left
 
-                if (lifes > 1)
-                {
-                    // Game over
-                }
+
 
                 // for debug
                 state = gameState.OBJECT_APPEARS;
+
+                if (lifes < 1)
+                {
+                    // Game over
+                    showLifes.SetText("Game Over");
+                    state = gameState.GAME_OVER;
+                }
 
                 break;
 
