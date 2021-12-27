@@ -3,12 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using TMPro;
+using UnityEngine.SceneManagement;
 
+
+// TODO: Sounds, Animations, Show Score, try Climber recognition, add difficulty / Levels
 
 
 [RequireComponent(typeof(ARRaycastManager))]
 //[RequireComponent(typeof(Camera))]
 //[RequireComponent(typeof(ARPlaneManager))]
+
+
+public class ScoreObject
+{
+    public int score = 0;
+    public string teamName = "NoName";
+}
+
 
 public class GameLoop : MonoBehaviour
 {
@@ -25,17 +36,18 @@ public class GameLoop : MonoBehaviour
     private GameObject spawnedDragon;
 
     private ARRaycastManager _arRaycastManager;
+    private ARPlaneManager _arPlaneManager;
 
     [SerializeField]
     private Camera _arCamera;
 
-    //private ARPlaneManager _arPlaneManager;
     private List<Vector3> outlinePoints = new List<Vector3>();
 
     private float speedDragon = 0.2f;
     private Vector3 oldPos = Vector3.zero;
 
     private int lifes = 5;
+    private int score = 0;
 
     enum gameState
     {
@@ -76,7 +88,6 @@ public class GameLoop : MonoBehaviour
 
         spawnedDragon = Instantiate(dragon, pos , dragon.transform.rotation);
         oldPos = spawnedDragon.transform.position;
-        //spawnedDragon.transform.Rotate(0, 180, 0);
         spawnedDragon.GetComponent<Animation>().Play();
         showLifes.SetText("Lifes: " + lifes.ToString());
 
@@ -90,7 +101,7 @@ public class GameLoop : MonoBehaviour
         
 
         _arRaycastManager = GetComponent<ARRaycastManager>();
-        //_arPlaneManager = GetComponent<ARPlaneManager>();
+        _arPlaneManager = GetComponent<ARPlaneManager>();
 
         Debug.Log("First inactive");
             
@@ -119,20 +130,23 @@ public class GameLoop : MonoBehaviour
                 
                 moveDragon(coinsItem.transform.position - new Vector3(0, 0.2f, 0)); // Workaround because of weird offset...
 
-                // Wait for input from player?
-                if (TryTouchItem())
+                // Wait for input from player
+                if (TryTouchItem()) // TODO: Add sounds? & animation?
                 {
+                    coinsItem.SetActive(false);
+                    score += 1;
                     state = gameState.PLAYER_COLLECTED;
                 }
 
                 // Check if dragon is at position earlier
+                // TODO: Add sounds? & animation?
                 if ((spawnedDragon.transform.position + new Vector3(0, 0.2f,0)) == coinsItem.transform.position) // Workaround because of weird offset...
                 {
 
                     coinsItem.SetActive(false);
-                    showLifes.SetText("Lifes: " + lifes.ToString());
                     lifes -= 1;
-
+                    showLifes.SetText("Lifes: " + lifes.ToString());
+                    
                     state = gameState.DRAGON_COLLECTED;
                 }
 
@@ -165,6 +179,27 @@ public class GameLoop : MonoBehaviour
 
                 break;
 
+            case gameState.GAME_OVER:
+
+                Debug.Log("Game Over, starting scoreboard scene");
+
+                ScoreObject myScore = new ScoreObject();
+                myScore.score = score;
+                myScore.teamName = PlayerPrefs.GetString("Teamname", "NoName");
+                string ScoreAndTeam = JsonUtility.ToJson(myScore);
+
+                PlayerPrefs.SetString("ScoreAndTeam", ScoreAndTeam);
+                SceneManager.LoadScene("ScoreScene");
+
+                break;
+
+            default:
+
+                Debug.Log("Something went wrong");
+
+                break;
+
+
         }
 
 
@@ -173,12 +208,10 @@ public class GameLoop : MonoBehaviour
 
     void moveDragon(Vector3 pos)
     {
-
-
-
         //Quaternion targetRotation = spawnedDragon.transform.rotation;
-        Quaternion targetRotation = Quaternion.LookRotation(pos);
-        targetRotation *= Quaternion.Euler(0, 90, 0);
+        Vector3 direction = pos - spawnedDragon.transform.position;
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        //targetRotation *= Quaternion.Euler(0, 90, 0);
 
         //if (oldPos.x > pos.x) // going left
         //{
@@ -201,10 +234,12 @@ public class GameLoop : MonoBehaviour
         //    targetRotation *= Quaternion.Euler(0, 90, 0);
         //}
 
+        
+
         spawnedDragon.transform.position = Vector3.MoveTowards(spawnedDragon.transform.position, pos, speedDragon * Time.deltaTime);
         spawnedDragon.transform.rotation = Quaternion.Slerp(spawnedDragon.transform.rotation, targetRotation, 2f * Time.deltaTime);
 
-        oldPos = pos;
+        //oldPos = pos;
 
     }
 
@@ -219,7 +254,7 @@ public class GameLoop : MonoBehaviour
         return item = Instantiate(item, pos, Quaternion.LookRotation(Vector3.up)); // seems good
     }
 
-    bool TryTouchItem() // Not work yet?
+    bool TryTouchItem() // Works now?
     {
         if (Input.touchCount > 0)
         {
@@ -229,7 +264,8 @@ public class GameLoop : MonoBehaviour
             {
                 Debug.Log("Got the touch");
 
-                Ray ray = _arCamera.ScreenPointToRay(theTouch.position);
+                //Ray ray = _arCamera.ScreenPointToRay(theTouch.position);
+                Ray ray = Camera.main.ScreenPointToRay(theTouch.position);
                 
                 RaycastHit hitInfo;
 
@@ -251,4 +287,5 @@ public class GameLoop : MonoBehaviour
         
         return false;
     }
+
 }

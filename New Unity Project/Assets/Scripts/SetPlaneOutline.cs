@@ -145,7 +145,7 @@ public class SetPlaneOutline : MonoBehaviour
                 return;
             }
 
-            if (_arRaycastManager.Raycast(touchPosition, hits, UnityEngine.XR.ARSubsystems.TrackableType.All)) // Maybe all is expensive?? Also instantiates on horizontal plane??
+            if (_arRaycastManager.Raycast(touchPosition, hits, UnityEngine.XR.ARSubsystems.TrackableType.All)) 
             {
                 var hitPos = hits[0].pose;
 
