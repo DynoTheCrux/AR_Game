@@ -74,6 +74,10 @@ public class SetPlaneOutline : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
+        _arPlaneManager.planePrefab.SetActive(true);
+        _arPlaneManager.SetTrackablesActive(true);
+        showCorner.gameObject.SetActive(true);
     }
 
     // Update is called once per frame
@@ -107,20 +111,10 @@ public class SetPlaneOutline : MonoBehaviour
 
             case gameCorner.AllDone:
 
-                //_arPlaneManager.planePrefab = null; // could also work for all future planes...
                 _arPlaneManager.planePrefab.SetActive(false);
                 _arPlaneManager.SetTrackablesActive(false);
                 showCorner.gameObject.SetActive(false);
 
-                // Hide planes again and move on ?
-                //foreach (var plane in _arPlaneManager.trackables)
-                //{
-                //    plane.gameObject.SetActive(false); // not quite right because it stops tracking it? Only disable the visu of the plane? make it transparent?
-
-                //    // Möglicherweise muss plane visualizer auch diabled werden
-
-
-                //}
 
                 debugForFinish = true;
 
@@ -134,6 +128,8 @@ public class SetPlaneOutline : MonoBehaviour
 
                 break;
         }
+
+
 
 
 
@@ -151,6 +147,7 @@ public class SetPlaneOutline : MonoBehaviour
 
                 GameObject spawnedObject = Instantiate(indicateCorner, hitPos.position, hitPos.rotation);
                 spawnedObjects[i] = spawnedObject;
+                
                 
 
                 switch (setCorner)

@@ -24,7 +24,7 @@ public class Scoreboard : MonoBehaviour
         ScoreObject highScore = JsonUtility.FromJson<ScoreObject>(PlayerPrefs.GetString("HighScore", NoScoreAndTeam));
         Debug.Log("Got current high Score: " + highScore.teamName + "," + highScore.score.ToString());
 
-        showScore.SetText(myScore.teamName + " - " + myScore.score);
+        showScore.SetText(myScore.teamName + ": " + myScore.score);
 
         if (highScore.score < myScore.score)
         {
@@ -35,7 +35,7 @@ public class Scoreboard : MonoBehaviour
         } else
         {
 
-            showHighScore.SetText(highScore.teamName + " - " + highScore.score);
+            showHighScore.SetText(highScore.teamName + ": " + highScore.score);
         }
 
 

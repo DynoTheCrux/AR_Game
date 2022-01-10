@@ -33,6 +33,12 @@ public class GameLoop : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI showLifes;
 
+    [SerializeField]
+    private Animator transition;
+
+    [SerializeField]
+    private GameObject BackgroundPanel;
+
     private GameObject spawnedDragon;
 
     private ARRaycastManager _arRaycastManager;
@@ -42,12 +48,16 @@ public class GameLoop : MonoBehaviour
     private Camera _arCamera;
 
     private List<Vector3> outlinePoints = new List<Vector3>();
+    private int oldQ = 0;
+    List<Vector3> Q = new List<Vector3>();
 
     private float speedDragon = 0.2f;
     private Vector3 oldPos = Vector3.zero;
 
     private int lifes = 5;
     private int score = 0;
+
+
 
     enum gameState
     {
@@ -76,6 +86,15 @@ public class GameLoop : MonoBehaviour
         Debug.Log(outlinePoints[2].x + "," + outlinePoints[2].y + "," + outlinePoints[2].z);
         Debug.Log(outlinePoints[3].x + "," + outlinePoints[3].y + "," + outlinePoints[3].z);
 
+
+        // spawn in other quadrant of the game. Q1 (upper line midpoint), Q2 (right line midpoint)....
+
+        
+        Q.Add(new Vector3((outlinePoints[0].x + outlinePoints[1].x) / 2.0f, (outlinePoints[0].y + outlinePoints[1].y) / 2.0f, (outlinePoints[0].z + outlinePoints[1].z) / 2.0f));
+        Q.Add(new Vector3((outlinePoints[1].x + outlinePoints[2].x) / 2.0f, (outlinePoints[1].y + outlinePoints[2].y) / 2.0f, (outlinePoints[1].z + outlinePoints[2].z) / 2.0f));
+        Q.Add(new Vector3((outlinePoints[2].x + outlinePoints[3].x) / 2.0f, (outlinePoints[2].y + outlinePoints[3].y) / 2.0f, (outlinePoints[2].z + outlinePoints[3].z) / 2.0f));
+        Q.Add(new Vector3((outlinePoints[3].x + outlinePoints[0].x) / 2.0f, (outlinePoints[3].y + outlinePoints[0].y) / 2.0f, (outlinePoints[3].z + outlinePoints[0].z) / 2.0f));
+
         // calculate random starting position. not perfect if plane is non rectangular....
 
         float posx = Random.Range(outlinePoints[0].x, outlinePoints[1].x);
@@ -89,6 +108,7 @@ public class GameLoop : MonoBehaviour
         spawnedDragon = Instantiate(dragon, pos , dragon.transform.rotation);
         oldPos = spawnedDragon.transform.position;
         spawnedDragon.GetComponent<Animation>().Play();
+        BackgroundPanel.SetActive(true);
         showLifes.SetText("Lifes: " + lifes.ToString());
 
 
@@ -102,6 +122,7 @@ public class GameLoop : MonoBehaviour
 
         _arRaycastManager = GetComponent<ARRaycastManager>();
         _arPlaneManager = GetComponent<ARPlaneManager>();
+        BackgroundPanel.SetActive(false);
 
         Debug.Log("First inactive");
             
@@ -135,6 +156,12 @@ public class GameLoop : MonoBehaviour
                 {
                     coinsItem.SetActive(false);
                     score += 1;
+
+                    if (score%10 == 0)
+                    {
+                        speedDragon += 0.05f;
+                    }
+
                     state = gameState.PLAYER_COLLECTED;
                 }
 
@@ -158,13 +185,11 @@ public class GameLoop : MonoBehaviour
 
 
 
-                // for debug
                 state = gameState.OBJECT_APPEARS;
 
                 if (lifes < 1)
                 {
                     // Game over
-                    showLifes.SetText("Game Over");
                     state = gameState.GAME_OVER;
                 }
 
@@ -174,7 +199,6 @@ public class GameLoop : MonoBehaviour
 
                 // If player collected score a point and spawn new item
 
-                // for debug
                 state = gameState.OBJECT_APPEARS;
 
                 break;
@@ -189,8 +213,8 @@ public class GameLoop : MonoBehaviour
                 string ScoreAndTeam = JsonUtility.ToJson(myScore);
 
                 PlayerPrefs.SetString("ScoreAndTeam", ScoreAndTeam);
-                SceneManager.LoadScene("ScoreScene");
 
+                StartCoroutine(LoadNewScene());
                 break;
 
             default:
@@ -208,53 +232,68 @@ public class GameLoop : MonoBehaviour
 
     void moveDragon(Vector3 pos)
     {
-        //Quaternion targetRotation = spawnedDragon.transform.rotation;
         Vector3 direction = pos - spawnedDragon.transform.position;
-        Quaternion targetRotation = Quaternion.LookRotation(direction);
-        //targetRotation *= Quaternion.Euler(0, 90, 0);
-
-        //if (oldPos.x > pos.x) // going left
-        //{
-        //    Debug.Log("New Pos");
-        //    Debug.Log(pos.x + "," + pos.y + "," + pos.z);
-        //    Debug.Log("Old Pos");
-        //    Debug.Log(oldPos.x + "," + oldPos.y + "," + oldPos.z);
-        //    Debug.Log("Going Left");
-        //    targetRotation = Quaternion.LookRotation(pos);
-        //    targetRotation *= Quaternion.Euler(0, -90, 0);
-        //} 
-        //else if (oldPos.x < pos.x) // going right
-        //{
-        //    Debug.Log("New Pos");
-        //    Debug.Log(pos.x + "," + pos.y + "," + pos.z);
-        //    Debug.Log("Old Pos");
-        //    Debug.Log(oldPos.x + "," + oldPos.y + "," + oldPos.z);
-        //    Debug.Log("Going Right");
-        //    targetRotation = Quaternion.LookRotation(pos);
-        //    targetRotation *= Quaternion.Euler(0, 90, 0);
-        //}
-
-        
+        Quaternion targetRotation = Quaternion.LookRotation(direction);        
 
         spawnedDragon.transform.position = Vector3.MoveTowards(spawnedDragon.transform.position, pos, speedDragon * Time.deltaTime);
         spawnedDragon.transform.rotation = Quaternion.Slerp(spawnedDragon.transform.rotation, targetRotation, 2f * Time.deltaTime);
 
-        //oldPos = pos;
 
     }
 
     GameObject randomlySpawnItem(GameObject item)
     {
-        float posx = Random.Range(outlinePoints[0].x, outlinePoints[1].x);
-        float posy = Random.Range(outlinePoints[0].y, outlinePoints[2].y);
+        int newQ = 0;
+        float posx = 0f;
+        float posy = 0f;
         float posz = outlinePoints[0].z;
+        while (newQ == oldQ)
+        {
+            newQ = Random.Range(0, 4);
+        }
+        Debug.Log("Old Q: " + oldQ);
+        Debug.Log("New Q: " + newQ);
+
+        switch (newQ)
+        {
+            case 0:
+                // Q0 left up
+                posx = Random.Range(outlinePoints[0].x, Q[0].x);
+                posy = Random.Range(outlinePoints[0].y, Q[3].y);        
+                break;
+
+            case 1:
+                // Q1 right up
+                posx = Random.Range(Q[0].x, outlinePoints[1].x);
+                posy = Random.Range(outlinePoints[1].y, Q[1].y);
+                break;
+
+            case 2:
+                // Q2 right down
+                posx = Random.Range(Q[2].x, outlinePoints[2].x);
+                posy = Random.Range(outlinePoints[0].y, Q[1].y);
+                break;
+
+            case 3:
+                // Q3 left down
+                posx = Random.Range(outlinePoints[3].x, Q[2].x);
+                posy = Random.Range(outlinePoints[3].y, Q[3].y);
+                break;
+
+            default:
+                Debug.Log("Something went wrong");
+                break;
+        }
+
+        oldQ = newQ;
+
 
         Vector3 pos = new Vector3(posx, posy, posz);
 
         return item = Instantiate(item, pos, Quaternion.LookRotation(Vector3.up)); // seems good
     }
 
-    bool TryTouchItem() // Works now?
+    bool TryTouchItem() // Works now
     {
         if (Input.touchCount > 0)
         {
@@ -264,7 +303,6 @@ public class GameLoop : MonoBehaviour
             {
                 Debug.Log("Got the touch");
 
-                //Ray ray = _arCamera.ScreenPointToRay(theTouch.position);
                 Ray ray = Camera.main.ScreenPointToRay(theTouch.position);
                 
                 RaycastHit hitInfo;
@@ -286,6 +324,16 @@ public class GameLoop : MonoBehaviour
         }
         
         return false;
+    }
+
+    IEnumerator LoadNewScene()
+    {
+        transition.SetTrigger("startTransition");
+
+        yield return new WaitForSeconds(1);
+
+
+        SceneManager.LoadScene("ScoreScene");
     }
 
 }
