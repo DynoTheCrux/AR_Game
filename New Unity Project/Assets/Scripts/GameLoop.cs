@@ -6,12 +6,11 @@ using TMPro;
 using UnityEngine.SceneManagement;
 
 
-// TODO: Sounds, Animations, Show Score, try Climber recognition, add difficulty / Levels
+// TODO: Sounds,  try Climber recognition
 
 
 [RequireComponent(typeof(ARRaycastManager))]
-//[RequireComponent(typeof(Camera))]
-//[RequireComponent(typeof(ARPlaneManager))]
+
 
 
 public class ScoreObject
@@ -25,6 +24,9 @@ public class GameLoop : MonoBehaviour
 {
 
     [SerializeField]
+    private Animator transition;
+
+    [SerializeField]
     private GameObject dragon;
 
     [SerializeField]
@@ -32,9 +34,6 @@ public class GameLoop : MonoBehaviour
 
     [SerializeField]
     private TextMeshProUGUI showLifes;
-
-    [SerializeField]
-    private Animator transition;
 
     [SerializeField]
     private GameObject BackgroundPanel;
@@ -65,6 +64,7 @@ public class GameLoop : MonoBehaviour
         DRAGON_MOVES,
         DRAGON_COLLECTED,
         PLAYER_COLLECTED,
+        COINS_COLLECTED,
         GAME_OVER
     }
 
@@ -141,6 +141,7 @@ public class GameLoop : MonoBehaviour
                 // Spawn Items randomly
                 coinsItem = randomlySpawnItem(coinsItem);
                 coinsItem.SetActive(true);
+                coinsItem.transform.localScale = new Vector3(1, 1, 1);
                 state = gameState.DRAGON_MOVES;
 
                 break;
@@ -152,9 +153,11 @@ public class GameLoop : MonoBehaviour
                 moveDragon(coinsItem.transform.position - new Vector3(0, 0.2f, 0)); // Workaround because of weird offset...
 
                 // Wait for input from player
-                if (TryTouchItem()) // TODO: Add sounds? & animation?
+                if (TryTouchItem()) // TODO: Add sounds?
                 {
-                    coinsItem.SetActive(false);
+
+                    StartCoroutine(AnimateCollection(true));
+                    //coinsItem.SetActive(false);
                     score += 1;
 
                     if (score%10 == 0)
@@ -162,20 +165,25 @@ public class GameLoop : MonoBehaviour
                         speedDragon += 0.05f;
                     }
 
-                    state = gameState.PLAYER_COLLECTED;
+                    state = gameState.COINS_COLLECTED;
                 }
 
                 // Check if dragon is at position earlier
-                // TODO: Add sounds? & animation?
+                // TODO: Add sounds? 
                 if ((spawnedDragon.transform.position + new Vector3(0, 0.2f,0)) == coinsItem.transform.position) // Workaround because of weird offset...
                 {
 
-                    coinsItem.SetActive(false);
+                    // animate shrinking of coins? Add sound?
+                    StartCoroutine(AnimateCollection(false));
+                    //
+                    //coinsItem.SetActive(false);
                     lifes -= 1;
                     showLifes.SetText("Lifes: " + lifes.ToString());
-                    
-                    state = gameState.DRAGON_COLLECTED;
+
+                    state = gameState.COINS_COLLECTED;
                 }
+
+                
 
                 break;
 
@@ -184,13 +192,13 @@ public class GameLoop : MonoBehaviour
                 // If dragon is at pos of the spawned object take a life and spawn new item if still life left
 
 
-
-                state = gameState.OBJECT_APPEARS;
-
                 if (lifes < 1)
                 {
                     // Game over
                     state = gameState.GAME_OVER;
+                } else
+                {
+                    state = gameState.OBJECT_APPEARS;
                 }
 
                 break;
@@ -200,6 +208,12 @@ public class GameLoop : MonoBehaviour
                 // If player collected score a point and spawn new item
 
                 state = gameState.OBJECT_APPEARS;
+
+                break;
+
+            case gameState.COINS_COLLECTED:
+
+                    //wait for coroutine to finish?    
 
                 break;
 
@@ -334,6 +348,25 @@ public class GameLoop : MonoBehaviour
 
 
         SceneManager.LoadScene("ScoreScene");
+    }
+
+    IEnumerator AnimateCollection(bool PlayerCollected)
+    {
+        coinsItem.GetComponent<Animation>().Play();
+
+        yield return new WaitForSeconds(0.25f);
+
+        coinsItem.SetActive(false);
+
+        if (PlayerCollected)
+        {
+            state = gameState.PLAYER_COLLECTED;
+        }
+        else
+        {
+            state = gameState.DRAGON_COLLECTED;
+        }
+
     }
 
 }
