@@ -30,6 +30,9 @@ public class GameLoop : MonoBehaviour
     private GameObject dragon;
 
     [SerializeField]
+    AudioManager myAudio;
+
+    [SerializeField]
     private GameObject coinsItem;
 
     [SerializeField]
@@ -50,13 +53,12 @@ public class GameLoop : MonoBehaviour
     private int oldQ = 0;
     List<Vector3> Q = new List<Vector3>();
 
-    private float speedDragon = 0.2f;
+    private float speedDragon = 0.15f;
     private Vector3 oldPos = Vector3.zero;
 
     private int lifes = 5;
     private int score = 0;
-
-
+    
 
     enum gameState
     {
@@ -76,7 +78,7 @@ public class GameLoop : MonoBehaviour
     void Start()
     {
         Debug.Log("Now Starting");
-
+        
         SetPlaneOutline planeOutline = GameObject.FindObjectOfType<SetPlaneOutline>();
         outlinePoints = planeOutline.GetOutlinePoints();
 
@@ -153,9 +155,10 @@ public class GameLoop : MonoBehaviour
                 moveDragon(coinsItem.transform.position - new Vector3(0, 0.2f, 0)); // Workaround because of weird offset...
 
                 // Wait for input from player
-                if (TryTouchItem()) // TODO: Add sounds?
+                if (TryTouchItem()) 
                 {
-
+                    myAudio.playCoinsClink();
+                    
                     StartCoroutine(AnimateCollection(true));
                     //coinsItem.SetActive(false);
                     score += 1;
@@ -170,10 +173,12 @@ public class GameLoop : MonoBehaviour
 
                 // Check if dragon is at position earlier
                 // TODO: Add sounds? 
-                if ((spawnedDragon.transform.position + new Vector3(0, 0.2f,0)) == coinsItem.transform.position) // Workaround because of weird offset...
+                if ((spawnedDragon.transform.position + new Vector3(0, 0.2f ,0)) == coinsItem.transform.position) // Workaround because of weird offset... 0.2
                 {
 
                     // animate shrinking of coins? Add sound?
+                    //myAudio.playDragonRoar();
+                    myAudio.playDragonRoar();
                     StartCoroutine(AnimateCollection(false));
                     //
                     //coinsItem.SetActive(false);
@@ -352,21 +357,29 @@ public class GameLoop : MonoBehaviour
 
     IEnumerator AnimateCollection(bool PlayerCollected)
     {
-        coinsItem.GetComponent<Animation>().Play();
-
-        yield return new WaitForSeconds(0.25f);
-
-        coinsItem.SetActive(false);
 
         if (PlayerCollected)
         {
+            //FindObjectOfType<AudioManager>().playCoinsClink();
+            coinsItem.GetComponent<Animation>().Play();
+            //dragon.GetComponent<Animation>().Play("SJ001_hurt"); // would be nice but hard to time it right? 
+            yield return new WaitForSeconds(0.25f);
+
+            coinsItem.SetActive(false);
             state = gameState.PLAYER_COLLECTED;
         }
         else
         {
+            //FindObjectOfType<AudioManager>().playDragonRoar();
+            coinsItem.GetComponent<Animation>().Play();
+            //dragon.GetComponent<Animation>().Play("SJ001_skill1");
+            yield return new WaitForSeconds(0.25f);
+            coinsItem.SetActive(false);
             state = gameState.DRAGON_COLLECTED;
         }
 
     }
+
+
 
 }

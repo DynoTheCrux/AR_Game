@@ -38,6 +38,8 @@ public class SetPlaneOutline : MonoBehaviour
         UpperRight,
         LowerRight,
         LowerLeft,
+        CountDown,
+        Idle,
         AllDone
     } // 0 = upper left, 1 = upper right, 2 = lower right, 3 = lower left
     gameCorner setCorner = gameCorner.UpperLeft;
@@ -109,13 +111,27 @@ public class SetPlaneOutline : MonoBehaviour
 
                 break;
 
-            case gameCorner.AllDone:
+            case gameCorner.CountDown:
 
                 _arPlaneManager.planePrefab.SetActive(false);
                 _arPlaneManager.SetTrackablesActive(false);
+
+                StartCoroutine(countDown(5));
+
+                setCorner = gameCorner.Idle;
+
+                break;
+
+            case gameCorner.Idle:
+
+
+                // wait for coroutine
+
+                break;
+
+            case gameCorner.AllDone:
+
                 showCorner.gameObject.SetActive(false);
-
-
                 debugForFinish = true;
 
                 foreach (var _object in spawnedObjects)
@@ -124,7 +140,7 @@ public class SetPlaneOutline : MonoBehaviour
                 }
 
                 // Enable gameobject or script of gameobject for game loop
-                gameLoopObject.SetActive(true); // does not start the script object??
+                gameLoopObject.SetActive(true); 
 
                 break;
         }
@@ -172,7 +188,7 @@ public class SetPlaneOutline : MonoBehaviour
 
                     case gameCorner.LowerLeft:
                         planeOutlinePoints.Add(hitPos.position);
-                        setCorner = gameCorner.AllDone;
+                        setCorner = gameCorner.CountDown;
                         break;
 
                     case gameCorner.AllDone:
@@ -192,12 +208,24 @@ public class SetPlaneOutline : MonoBehaviour
     }
 
 
-    //IEnumerator WaitSeconds(int Seconds)
-    //{
-    //    Debug.Log("SetPlaneOutline: " + Time.time);
-    //    yield return new WaitForSeconds(Seconds);
-    //    Debug.Log("SetPlaneOutline: " + Time.time);
-    //}
+    IEnumerator countDown(int Seconds)
+    {
+
+        while(Seconds > 0)
+        {
+            string strCountDown = "Game Starts in: " + Seconds.ToString();
+            showCorner.SetText(strCountDown);
+            yield return new WaitForSeconds(1F);
+            Seconds--;
+        }
+
+        showCorner.SetText("START!");
+
+        yield return new WaitForSeconds(1F);
+
+        setCorner = gameCorner.AllDone;
+
+    }
 
 }
 
