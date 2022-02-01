@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine.SceneManagement;
 
 
-// TODO: Sounds,  try Climber recognition
+// TODO: try Climber recognition
 
 
 [RequireComponent(typeof(ARRaycastManager))]
@@ -42,12 +42,6 @@ public class GameLoop : MonoBehaviour
     private GameObject BackgroundPanel;
 
     private GameObject spawnedDragon;
-
-    private ARRaycastManager _arRaycastManager;
-    private ARPlaneManager _arPlaneManager;
-
-    [SerializeField]
-    private Camera _arCamera;
 
     private List<Vector3> outlinePoints = new List<Vector3>();
     private int oldQ = 0;
@@ -105,8 +99,6 @@ public class GameLoop : MonoBehaviour
 
         Vector3 pos = new Vector3(posx, posy, posz);
 
-        // better raycasting against the plane??
-
         spawnedDragon = Instantiate(dragon, pos , dragon.transform.rotation);
         oldPos = spawnedDragon.transform.position;
         spawnedDragon.GetComponent<Animation>().Play();
@@ -121,9 +113,6 @@ public class GameLoop : MonoBehaviour
     private void Awake()
     {
         
-
-        _arRaycastManager = GetComponent<ARRaycastManager>();
-        _arPlaneManager = GetComponent<ARPlaneManager>();
         BackgroundPanel.SetActive(false);
 
         Debug.Log("First inactive");
@@ -160,7 +149,6 @@ public class GameLoop : MonoBehaviour
                     myAudio.playCoinsClink();
                     
                     StartCoroutine(AnimateCollection(true));
-                    //coinsItem.SetActive(false);
                     score += 1;
 
                     if (score%10 == 0)
@@ -172,16 +160,12 @@ public class GameLoop : MonoBehaviour
                 }
 
                 // Check if dragon is at position earlier
-                // TODO: Add sounds? 
                 if ((spawnedDragon.transform.position + new Vector3(0, 0.2f ,0)) == coinsItem.transform.position) // Workaround because of weird offset... 0.2
                 {
 
-                    // animate shrinking of coins? Add sound?
-                    //myAudio.playDragonRoar();
+
                     myAudio.playDragonRoar();
                     StartCoroutine(AnimateCollection(false));
-                    //
-                    //coinsItem.SetActive(false);
                     lifes -= 1;
                     showLifes.SetText("Lifes: " + lifes.ToString());
 
@@ -218,7 +202,7 @@ public class GameLoop : MonoBehaviour
 
             case gameState.COINS_COLLECTED:
 
-                    //wait for coroutine to finish?    
+                    //wait for coroutine to finish   
 
                 break;
 
@@ -360,9 +344,7 @@ public class GameLoop : MonoBehaviour
 
         if (PlayerCollected)
         {
-            //FindObjectOfType<AudioManager>().playCoinsClink();
             coinsItem.GetComponent<Animation>().Play();
-            //dragon.GetComponent<Animation>().Play("SJ001_hurt"); // would be nice but hard to time it right? 
             yield return new WaitForSeconds(0.25f);
 
             coinsItem.SetActive(false);
@@ -370,9 +352,7 @@ public class GameLoop : MonoBehaviour
         }
         else
         {
-            //FindObjectOfType<AudioManager>().playDragonRoar();
             coinsItem.GetComponent<Animation>().Play();
-            //dragon.GetComponent<Animation>().Play("SJ001_skill1");
             yield return new WaitForSeconds(0.25f);
             coinsItem.SetActive(false);
             state = gameState.DRAGON_COLLECTED;
